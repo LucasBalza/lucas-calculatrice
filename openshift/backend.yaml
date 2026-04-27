@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lucas-calculator-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lucas-calculator-backend
+  template:
+    metadata:
+      labels:
+        app: lucas-calculator-backend
+    spec:
+      containers:
+      - name: backend
+        image: lucas-calculator-backend:latest 
+        ports:
+        - containerPort: 3000
+        env:
+        - name: PORT
+          value: "3000"
+        - name: MONGODB_URI
+          value: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@lucas-calculator-mongo:27017/calculator"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: lucas-calculator-secrets
+              key: jwt-secret
+        - name: MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: lucas-calculator-secrets
+              key: mongo-username
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: lucas-calculator-secrets
+              key: mongo-password
+        - name: NODE_ENV
+          value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lucas-calculator-backend
+spec:
+  selector:
+    app: lucas-calculator-backend
+  ports:
+  - port: 3000
+    targetPort: 3000
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: lucas-calculator-backend
+spec:
+  to:
+    kind: Service
+    name: lucas-calculator-backend
+  port:
+    targetPort: 3000

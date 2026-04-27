@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calculator-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calculator-mongo
+  template:
+    metadata:
+      labels:
+        app: calculator-mongo
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:7.0
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "admin"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "password"
+        - name: MONGO_INITDB_DATABASE
+          value: "calculator"
+        volumeMounts:
+        - name: mongo-storage
+          mountPath: /data/db
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: mongo-storage
+        persistentVolumeClaim:
+          claimName: mongo-pvc
+      - name: init-script
+        configMap:
+          name: mongo-init-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calculator-mongo
+spec:
+  selector:
+    app: calculator-mongo
+  ports:
+  - port: 27017
+    targetPort: 27017
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init-config
+data:
+  init-mongo.js: |
+    db.createUser({
+      user: 'admin',
+      pwd: 'password',
+      roles: [
+        {
+          role: 'readWrite',
+          db: 'calculator'
+        },
+        {
+          role: 'dbAdmin',
+          db: 'calculator'
+        }
+      ]
+    });
+
+    db = db.getSiblingDB('admin');
+
+    db.createUser({
+      user: 'admin',
+      pwd: 'password',
+      roles: ['userAdminAnyDatabase', 'readWriteAnyDatabase']
+    });

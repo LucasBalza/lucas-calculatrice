@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calculator-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calculator-frontend
+  template:
+    metadata:
+      labels:
+        app: calculator-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: calculator-frontend:latest  # À remplacer par l'image OpenShift
+        ports:
+        - containerPort: 5173
+        env:
+        - name: VITE_API_URL
+          value: "http://calculator-backend:3000"  # Utiliser le service interne
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calculator-frontend
+spec:
+  selector:
+    app: calculator-frontend
+  ports:
+  - port: 5173
+    targetPort: 5173
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: calculator-frontend
+spec:
+  to:
+    kind: Service
+    name: calculator-frontend
+  port:
+    targetPort: 5173
