@@ -15,18 +15,12 @@ oc new-project lucas-calculatrice
 
 #### Backend
 ```bash
-# Ou utiliser S2I
-oc new-app nodejs:20~https://github.com/LucasBalza/lucas-calculator-backend --name=lucas-calculator-backend
+oc new-app nodejs:18-ubi8~https://github.com/LucasBalza/lucas-calculatrice --name=lucas-calculator-backend
 ```
 
 #### Frontend
 ```bash
-# Depuis le répertoire frontend
-oc new-build --binary --name=calculator-frontend --image-stream=nodejs:20
-oc start-build calculator-frontend --from-dir=. --follow
-
-# Ou utiliser S2I
-oc new-app nodejs:20~https://github.com/LucasBalza/lucas-calculator-frontend --name=lucas-calculator-frontend
+oc new-app nodejs:18-ubi8~https://github.com/LucasBalza/lucas-calculatrice --name=lucas-calculator-frontend
 ```
 
 ### 3. Créer les secrets

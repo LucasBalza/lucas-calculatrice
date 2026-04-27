@@ -10,6 +10,9 @@ projet/
 ├── frontend/         # Application React + TypeScript + Vite
 ├── openshift/        # Manifests Kubernetes pour OpenShift
 ├── docker-compose.yml
+├── push-to-harbor.sh # Script pour pousser les images Harbor
+├── .env              # Variables d'environnement locales
+├── .env.example      # Exemple de configuration
 └── README.md
 ```
 
@@ -24,8 +27,16 @@ L'application nécessite une authentification utilisateur pour accéder à la ca
 
 ### Variables d'environnement
 - **JWT_SECRET** : Clé secrète pour les tokens JWT (stockée dans un Secret Kubernetes)
-- **MONGODB_URI** : URI de connexion MongoDB
+- **MONGODB_URI** : URI de connexion MongoDB avec authSource=admin
+- **MONGO_ROOT_USERNAME** : Utilisateur MongoDB (calculator_user)
+- **MONGO_ROOT_PASSWORD** : Mot de passe MongoDB (SecurePass2026!)
 - **NODE_ENV** : Environnement (development/production)
+
+### Fichier .env
+Copie `.env.example` vers `.env` et ajuste les valeurs :
+```bash
+cp .env.example .env
+```
 
 ## 🚀 Démarrage rapide
 
@@ -37,6 +48,9 @@ docker-compose up --build
 
 # En arrière-plan
 docker-compose up -d --build
+
+# Arrêter et nettoyer
+docker-compose down -v
 ```
 
 L'application sera accessible sur :
@@ -46,6 +60,31 @@ L'application sera accessible sur :
 ### Option 2 : Déploiement OpenShift
 
 Voir le guide dans `openshift/README.md`
+
+### Option 3 : Avec Harbor (Registry)
+
+#### Pousser les images vers Harbor
+```bash
+# Se connecter à Harbor
+docker login harbor.kakor.ovh
+
+# Builder et pousser le backend (depuis la racine du projet)
+docker build -t harbor.kakor.ovh/projet/lucas-calculator-backend:latest ./backend
+docker push harbor.kakor.ovh/projet/lucas-calculator-backend:latest
+
+# Builder et pousser le frontend (depuis la racine du projet)
+docker build -t harbor.kakor.ovh/projet/lucas-calculator-frontend:latest ./frontend
+docker push harbor.kakor.ovh/projet/lucas-calculator-frontend:latest
+```
+
+#### Script automatique
+```bash
+# Utilisation simple (projet par défaut)
+./push-to-harbor.sh
+
+# Avec un nom de projet spécifique
+./push-to-harbor.sh nom-du-projet
+```
 
 ## 🧪 Tests
 
@@ -155,6 +194,9 @@ docker-compose down
 
 # Rebuild et démarrer
 docker-compose up --build
+
+# Nettoyer les volumes (utile pour reset MongoDB)
+docker-compose down -v
 ```
 
 ## 🛠️ Technologies utilisées
@@ -162,6 +204,9 @@ docker-compose up --build
 ### Backend
 - **Node.js** : Runtime JavaScript
 - **Express** : Framework web
+- **MongoDB** : Base de données NoSQL
+- **Mongoose** : ODM MongoDB
+- **JWT** : Authentification par token
 - **Jest** : Framework de tests
 - **Supertest** : Tests d'intégration HTTP
 
@@ -201,4 +246,39 @@ L'application gère :
 - Opérations invalides
 - Nombres invalides
 - Erreurs réseau
+- Erreurs d'authentification MongoDB
+
+## 🔧 Dépannage
+
+### Problèmes courants
+
+#### MongoDB : "Authentication failed"
+- Vérifie que `MONGO_ROOT_USERNAME` et `MONGO_ROOT_PASSWORD` sont définis dans `.env`
+- Assure-toi que l'URI contient `?authSource=admin`
+- Reset le volume MongoDB : `docker-compose down -v && docker-compose up -d`
+
+#### OpenShift : "field is immutable"
+- Supprime les ressources existantes : `oc delete deployment,service,route <nom> --ignore-not-found=true`
+- Réapplique le manifest : `oc apply -f <fichier>.yaml`
+
+#### Harbor : Images non visibles
+- Vérifie la connexion : `docker login harbor.kakor.ovh`
+- Assure-toi d'avoir les droits sur le projet
+- Vérifie le nom du repository : `harbor.kakor.ovh/projet/...`
+- **Build avant de push** : `docker build` doit être exécuté avant `docker push`
+- Exécute les commandes depuis la racine du projet
+- **Vérifie le nom du projet** : Va sur https://harbor.kakor.ovh pour voir le nom exact du projet (peut être différent de "projet")
+
+### Logs utiles
+
+```bash
+# Docker Compose
+docker-compose logs -f
+
+# OpenShift
+oc logs -f deployment/<nom>
+
+# MongoDB
+docker-compose exec mongo mongosh -u $MONGO_ROOT_USERNAME -p $MONGO_ROOT_PASSWORD --authenticationDatabase admin
+```
 

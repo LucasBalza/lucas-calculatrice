@@ -48,7 +48,8 @@ spec:
   selector:
     app: lucas-calculator-backend
   ports:
-  - port: 3000
+  - name: http
+    port: 3000
     targetPort: 3000
 ---
 apiVersion: route.openshift.io/v1
