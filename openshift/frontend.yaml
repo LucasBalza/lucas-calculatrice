@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: lucas-calculator-frontend:latest  # À remplacer par l'image OpenShift
+        image: harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest
         ports:
         - containerPort: 5173
         env:
@@ -29,7 +29,8 @@ spec:
   selector:
     app: lucas-calculator-frontend
   ports:
-  - port: 5173
+  - name: http
+    port: 5173
     targetPort: 5173
 ---
 apiVersion: route.openshift.io/v1

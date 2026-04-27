@@ -15,14 +15,27 @@ oc new-project lucas-calculatrice
 
 ### 2. Déployer les applications depuis Harbor
 
-#### Backend
+**Recommandé** : Utilise les images pré-buildées depuis Harbor pour un déploiement plus rapide.
+
+#### Option A : Déploiement direct (recommandé)
 ```bash
-oc new-app harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest --name=lucas-calculator-backend
+# Créer directement les deployments
+oc create deployment lucas-calculator-backend --image=harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest
+oc create deployment lucas-calculator-frontend --image=harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest
+
+# Exposer les services
+oc expose deployment lucas-calculator-backend --port=3000
+oc expose deployment lucas-calculator-frontend --port=5173
+
+# Créer les routes
+oc expose service lucas-calculator-backend
+oc expose service lucas-calculator-frontend
 ```
 
-#### Frontend
+#### Option B : Avec oc new-app (si permissions suffisantes)
 ```bash
-oc new-app harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest --name=lucas-calculator-frontend
+oc new-app harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest --name=lucas-calculator-backend --allow-missing-images
+oc new-app harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest --name=lucas-calculator-frontend --allow-missing-images
 ```
 
 ### 2. Alternative : Build et pousser les images (si pas encore fait)
@@ -94,6 +107,17 @@ Si OpenShift ne peut pas tirer les images Harbor :
 ```bash
 oc delete deployment,service,route lucas-calculator-backend --ignore-not-found=true
 oc apply -f backend.yaml
+```
+
+### Erreur "spec.ports[0].name: Required value"
+```bash
+# Ajouter un nom aux ports dans les services
+# Exemple pour frontend.yaml :
+# ports:
+# - name: http
+#   port: 5173
+#   targetPort: 5173
+oc apply -f frontend.yaml
 ```
 
 ### Pods en CrashLoopBackOff

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: lucas-calculator-backend:latest 
+        image: harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest 
         ports:
         - containerPort: 3000
         env:
