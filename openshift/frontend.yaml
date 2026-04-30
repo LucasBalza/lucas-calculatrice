@@ -37,21 +37,38 @@ spec:
 
 ---
 
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: lucas-calculator-frontend
+# spec:
+#   rules:
+#     - host: lucas-calculator-frontend.apps.openshift.kakor.ovh
+#       http:
+#         paths:
+#         - path: ''
+#           pathType: ImplementationSpecific
+#           backend:
+#             service:
+#               name: lucas-calculator-frontend
+#               port:
+#                 number: 80
+#   tls:
+#     - {}
+
+---
+
+apiVersion: route.openshift.io/v1
+kind: Route
 metadata:
   name: lucas-calculator-frontend
 spec:
-  rules:
-    - host: lucas-calculator-frontend.apps.openshift.kakor.ovh
-      http:
-        paths:
-        - path: ''
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: lucas-calculator-frontend
-              port:
-                number: 80
+  host: lucas-calculator-frontend.apps.openshift.kakor.ovh
+  to:
+    kind: Service
+    name: lucas-calculator-frontend
+  port:
+    targetPort: http
   tls:
-    - {}
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
