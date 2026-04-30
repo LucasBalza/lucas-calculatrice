@@ -8,11 +8,9 @@ let mongoServer;
 
 describe('Auth Routes', () => {
   beforeAll(async () => {
-    // Définir les variables d'environnement pour les tests
     process.env.JWT_SECRET = 'test-jwt-secret-key';
     process.env.NODE_ENV = 'test';
 
-    // Démarrer MongoDB en mémoire pour les tests
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
     await mongoose.connect(mongoUri);

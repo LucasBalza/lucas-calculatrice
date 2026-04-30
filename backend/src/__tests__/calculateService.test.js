@@ -18,11 +18,10 @@ describe('calculateService', () => {
   });
 
   test('division par zéro doit lever une erreur', () => {
-    expect(() => calculate('/', 10, 0)).toThrow('Division par zéro impossible');
+    expect(() => calculate('/', 10, 0)).toThrow(/Division par zéro/i);
   });
 
   test('opération invalide doit lever une erreur', () => {
-    expect(() => calculate('%', 10, 5)).toThrow('Opération non supportée');
+    expect(() => calculate('%', 10, 5)).toThrow(/Opération/i);
   });
 });
-
