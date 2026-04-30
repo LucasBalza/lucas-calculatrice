@@ -37,30 +37,28 @@ if (process.env.NODE_ENV !== 'test') {
 // CORS CONFIGURATION (FIX IMPORTANT)
 // =======================
 
-const allowedOrigins = [
-  'https://lucas-calculator-frontend.apps.openshift.kakor.ovh'
-];
+const cors = require('cors');
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Autorise Postman / tests (pas d'origine)
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: 'https://lucas-calculator-frontend.apps.openshift.kakor.ovh',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204
+};
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+// IMPORTANT : appliquer avant routes
+app.use(cors(corsOptions));
 
-      return callback(new Error('CORS non autorisé'), false);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  })
-);
+// IMPORTANT : gérer preflight explicitement
+app.options('*', cors(corsOptions));
 
-// Gestion du preflight OPTIONS (OBLIGATOIRE)
-app.options('*', cors());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://lucas-calculator-frontend.apps.openshift.kakor.ovh');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  next();
+});
 
 // =======================
 // Middlewares
