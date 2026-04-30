@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Build de l'application avec variable d'environnement
-ARG VITE_API_URL=http://backend:3000
+ARG VITE_API_URL=https://lucas-calculator-backend.apps.openshift.kakor.ovh
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
