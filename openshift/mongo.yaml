@@ -11,7 +11,7 @@ spec:
   persistentVolumeReclaimPolicy: Recycle
   storageClassName: slow
   nfs:
-    path: /Volume1/public/nfs-share-openshift/project-gp-1
+    path: /Volume1/public/nfs-share-openshift/groupe-1
     server: 192.168.1.56
 
 ---
