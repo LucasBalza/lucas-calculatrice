@@ -32,18 +32,26 @@ spec:
     app: lucas-calculator-frontend
   ports:
   - name: http
-    port: 5173
-    targetPort: 5173
+    port: 80
+    targetPort: 80
 
 ---
 
-apiVersion: route.openshift.io/v1
-kind: Route
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: lucas-calculator-frontend
 spec:
-  to:
-    kind: Service
-    name: lucas-calculator-frontend
-  port:
-    targetPort: 5173
+  rules:
+    - host: lucas-calculator-frontend.apps.openshift.kakor.ovh
+      http:
+        paths:
+        - path: ''
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: lucas-calculator-frontend
+              port:
+                number: 80
+  tls:
+    - {}
