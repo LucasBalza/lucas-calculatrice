@@ -34,31 +34,22 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // =======================
-// CORS CONFIGURATION (FIX IMPORTANT)
+// CORS CONFIGURATION (FIX PROPRE)
 // =======================
-
-const cors = require('cors');
-
 const corsOptions = {
-  origin: 'https://lucas-calculator-frontend.apps.openshift.kakor.ovh',
+  origin: [
+    'https://lucas-calculator-frontend.apps.openshift.kakor.ovh'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 204
+  credentials: true
 };
 
-// IMPORTANT : appliquer avant routes
+// IMPORTANT : CORS AVANT LES ROUTES
 app.use(cors(corsOptions));
 
-// IMPORTANT : gérer preflight explicitement
+// Gestion des preflight requests
 app.options('*', cors(corsOptions));
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://lucas-calculator-frontend.apps.openshift.kakor.ovh');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  next();
-});
 
 // =======================
 // Middlewares
@@ -71,7 +62,9 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/calculate', calculateRoutes);
 
+// =======================
 // Healthcheck
+// =======================
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
