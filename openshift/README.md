@@ -1,127 +1,215 @@
 # Déploiement sur OpenShift
 
-## Prérequis
-- Accès à un cluster OpenShift
-- `oc` CLI installé et connecté
-- **Images poussées sur Harbor** (voir script `push-to-harbor.sh` à la racine du projet)
-- Secrets configurés pour accéder au registry Harbor si nécessaire
+## 🧭 Vue d’ensemble
 
-## Étapes de déploiement
+Ce projet utilise une pipeline CI/CD GitHub Actions pour :
 
-### 1. Créer un nouveau projet
+* exécuter les tests backend
+* builder le frontend
+* construire les images Docker
+* pousser les images sur Harbor
+* déployer automatiquement sur OpenShift via des manifests YAML
+
+Le déploiement repose **exclusivement sur des images Docker hébergées sur Harbor** et des fichiers déclaratifs situés dans le dossier `openshift/`.
+
+---
+
+## ⚙️ Prérequis
+
+* Accès à un cluster OpenShift
+* CLI `oc` installée (uniquement pour un déploiement manuel)
+* Un projet OpenShift existant
+* Un registry Harbor accessible
+* Un repository GitHub avec les secrets configurés
+
+---
+
+## 🔐 Configuration des secrets GitHub
+
+Pour activer le pipeline complet (build + push + déploiement), les secrets suivants doivent être configurés :
+
+### Harbor
+
+* `HARBOR_USERNAME`
+* `HARBOR_PASSWORD`
+
+### OpenShift
+
+* `OPENSHIFT_SERVER`
+* `OPENSHIFT_TOKEN`
+* `OPENSHIFT_PROJECT`
+
+⚠️ Sans ces secrets :
+
+* les images ne seront **pas poussées**
+* le déploiement OpenShift ne sera **pas exécuté**
+
+---
+
+## 🚀 Fonctionnement de la pipeline
+
+La pipeline se déclenche sur :
+
+* `push` vers `main` ou `master`
+* `pull_request` vers `main` ou `master`
+
+### Étapes exécutées
+
+#### 1. Tests backend
+
+* installation des dépendances
+* exécution des tests (`npm test`)
+
+#### 2. Build frontend
+
+* installation des dépendances
+* compilation (`npm run build`)
+
+#### 3. Build Docker
+
+* construction des images backend et frontend
+* génération de tags temporaires (`ci-<run_number>`)
+
+#### 4. Push vers Harbor (uniquement sur push)
+
+* push des images avec le tag `latest`
+
+#### 5. Déploiement OpenShift (uniquement sur push)
+
+* connexion au cluster
+* sélection du projet
+* application des manifests :
+
 ```bash
-oc new-project lucas-calculatrice
+oc apply -f openshift/secrets.yaml
+oc apply -f openshift/mongo.yaml
+oc apply -f openshift/backend.yaml
+oc apply -f openshift/frontend.yaml
 ```
 
-### 2. Déployer les applications depuis Harbor
+---
 
-**Recommandé** : Utilise les images pré-buildées depuis Harbor pour un déploiement plus rapide.
+## 📦 Structure des manifests OpenShift
 
-#### Option A : Déploiement direct (recommandé)
+Tous les manifests utilisés par la CI sont situés dans :
+
 ```bash
-# Créer directement les deployments
-oc create deployment lucas-calculator-backend --image=harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest
-oc create deployment lucas-calculator-frontend --image=harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest
-
-# Exposer les services
-oc expose deployment lucas-calculator-backend --port=3000
-oc expose deployment lucas-calculator-frontend --port=5173
-
-# Créer les routes
-oc expose service lucas-calculator-backend
-oc expose service lucas-calculator-frontend
+openshift/
+├── secrets.yaml
+├── mongo.yaml
+├── backend.yaml
+└── frontend.yaml
 ```
 
-#### Option B : Avec oc new-app (si permissions suffisantes)
+Ces fichiers définissent :
+
+* les deployments
+* les services
+* les routes
+* les variables d’environnement via secrets
+
+---
+
+## 🧪 Déploiement manuel (optionnel)
+
+Si nécessaire, le déploiement peut être reproduit manuellement :
+
 ```bash
-oc new-app harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest --name=lucas-calculator-backend --allow-missing-images
-oc new-app harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest --name=lucas-calculator-frontend --allow-missing-images
+oc login <server> --token=<token>
+oc project <project>
+
+oc apply -f openshift/secrets.yaml
+oc apply -f openshift/mongo.yaml
+oc apply -f openshift/backend.yaml
+oc apply -f openshift/frontend.yaml
 ```
 
-### 2. Alternative : Build et pousser les images (si pas encore fait)
+⚠️ Les images utilisées doivent déjà être disponibles sur Harbor avec le tag `latest`.
 
-Si les images ne sont pas disponibles sur Harbor, OpenShift peut builder directement depuis GitHub :
+---
 
-#### Backend
-```bash
-oc new-app nodejs:18-ubi8~https://github.com/LucasBalza/lucas-calculatrice --name=lucas-calculator-backend
-```
-
-#### Frontend
-```bash
-oc new-app nodejs:18-ubi8~https://github.com/LucasBalza/lucas-calculatrice --name=lucas-calculator-frontend
-```
-
-### 3. Créer les secrets
-```bash
-oc apply -f secrets.yaml
-```
-
-### 4. Déployer MongoDB
-```bash
-oc apply -f mongo.yaml
-```
-
-### 5. Déployer le Backend
-```bash
-oc apply -f backend.yaml
-```
-
-### 6. Déployer le Frontend
-```bash
-oc apply -f frontend.yaml
-```
-
-### 7. Accéder à l'application
-```bash
-# Obtenir l'URL du frontend
-oc get routes calculator-frontend
-```
-
-## Variables d'environnement
+## 🔧 Variables d’environnement
 
 Les variables sensibles sont stockées dans un Secret Kubernetes :
-- **JWT_SECRET** : Clé secrète pour les tokens JWT
-- **MONGO_USERNAME** : Utilisateur MongoDB
-- **MONGO_PASSWORD** : Mot de passe MongoDB
 
-Pour changer ces valeurs en production :
-1. Encoder en base64 : `echo -n 'nouvelle-valeur' | base64`
-2. Mettre à jour le secret : `oc edit secret lucas-calculator-secrets`
-3. Redémarrer les pods : `oc rollout restart deployment lucas-calculator-backend`
+* `JWT_SECRET`
+* `MONGO_USERNAME`
+* `MONGO_PASSWORD`
 
-## Sécurité
-- Changer le JWT_SECRET en production
-- Utiliser des secrets pour les mots de passe
-- Configurer HTTPS via les routes OpenShift
+### Mise à jour
 
-## Dépannage
+```bash
+echo -n 'nouvelle-valeur' | base64
+oc edit secret lucas-calculator-secrets
+```
+
+Puis redémarrer le backend :
+
+```bash
+oc rollout restart deployment lucas-calculator-backend
+```
+
+---
+
+## 🔐 Sécurité
+
+* Modifier `JWT_SECRET` en production
+* Ne jamais exposer les mots de passe en clair
+* Utiliser les Secrets Kubernetes
+* Configurer HTTPS via les routes OpenShift
+
+---
+
+## 🛠️ Dépannage
 
 ### Images Harbor non accessibles
-Si OpenShift ne peut pas tirer les images Harbor :
-1. Vérifier que les images existent : `docker pull harbor.kakor.ovh/projet/lucas-calculator-backend:latest`
-2. Créer un secret d'accès au registry (voir section Configuration du Registry Harbor)
-3. Vérifier les permissions du projet Harbor
 
-### Erreur "field is immutable"
+* Vérifier l’existence des images :
+
 ```bash
-oc delete deployment,service,route lucas-calculator-backend --ignore-not-found=true
-oc apply -f backend.yaml
+docker pull harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest
 ```
 
-### Erreur "spec.ports[0].name: Required value"
+* Vérifier les credentials Harbor
+* Configurer un `imagePullSecret` si nécessaire
+
+---
+
+### Pods non mis à jour après un déploiement
+
+Si les pods ne prennent pas la nouvelle image :
+
 ```bash
-# Ajouter un nom aux ports dans les services
-# Exemple pour frontend.yaml :
-# ports:
-# - name: http
-#   port: 5173
-#   targetPort: 5173
-oc apply -f frontend.yaml
+oc rollout restart deployment lucas-calculator-backend
+oc rollout restart deployment lucas-calculator-frontend
 ```
 
-### Pods en CrashLoopBackOff
+---
+
+### Pods en erreur
+
 ```bash
 oc logs -f deployment/lucas-calculator-backend
 oc describe pod <nom-du-pod>
 ```
+
+---
+
+## 📌 Bonnes pratiques
+
+* Utiliser des tags versionnés en complément de `latest`
+* Mettre en place une stratégie de rollback
+* Surveiller les logs après chaque déploiement
+* Ajouter des probes (`liveness` / `readiness`) dans les deployments
+
+---
+
+## 🧠 Résumé
+
+* CI/CD = GitHub Actions
+* Images = Harbor
+* Déploiement = manifests YAML (`openshift/`)
+* Aucune construction d’image côté OpenShift
+* Pipeline conditionnelle aux secrets
+
+---

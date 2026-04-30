@@ -69,12 +69,12 @@ Voir le guide dans `openshift/README.md`
 docker login harbor.kakor.ovh
 
 # Builder et pousser le backend (depuis la racine du projet)
-docker build -t harbor.kakor.ovh/projet/lucas-calculator-backend:latest ./backend
-docker push harbor.kakor.ovh/projet/lucas-calculator-backend:latest
+docker build -t harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest ./backend
+docker push harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest
 
 # Builder et pousser le frontend (depuis la racine du projet)
-docker build -t harbor.kakor.ovh/projet/lucas-calculator-frontend:latest ./frontend
-docker push harbor.kakor.ovh/projet/lucas-calculator-frontend:latest
+docker build -t harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest ./frontend
+docker push harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest
 ```
 
 #### Script automatique
@@ -85,6 +85,25 @@ docker push harbor.kakor.ovh/projet/lucas-calculator-frontend:latest
 # Avec un nom de projet spécifique
 ./push-to-harbor.sh nom-du-projet
 ```
+
+## 🔁 Intégration continue (GitHub Actions)
+
+Le projet inclut un workflow GitHub Actions dans `.github/workflows/ci.yml`.
+Ce pipeline exécute :
+- les tests backend (`npm test` dans `backend`)
+- la compilation frontend (`npm run build` dans `frontend`)
+- la construction des images Docker backend et frontend
+- le push vers Harbor si les secrets GitHub sont définis
+- le déploiement sur OpenShift si les secrets OpenShift sont définis
+
+Secrets GitHub recommandés pour le pipeline :
+- `HARBOR_USERNAME`
+- `HARBOR_PASSWORD`
+- `OPENSHIFT_SERVER`
+- `OPENSHIFT_TOKEN`
+- `OPENSHIFT_PROJECT`
+
+Le déploiement automatique s’exécute sur les pushes vers `main` ou `master`.
 
 ## 🧪 Tests
 
@@ -247,27 +266,6 @@ L'application gère :
 - Nombres invalides
 - Erreurs réseau
 - Erreurs d'authentification MongoDB
-
-## 🔧 Dépannage
-
-### Problèmes courants
-
-#### MongoDB : "Authentication failed"
-- Vérifie que `MONGO_ROOT_USERNAME` et `MONGO_ROOT_PASSWORD` sont définis dans `.env`
-- Assure-toi que l'URI contient `?authSource=admin`
-- Reset le volume MongoDB : `docker-compose down -v && docker-compose up -d`
-
-#### OpenShift : "field is immutable"
-- Supprime les ressources existantes : `oc delete deployment,service,route <nom> --ignore-not-found=true`
-- Réapplique le manifest : `oc apply -f <fichier>.yaml`
-
-#### Harbor : Images non visibles
-- Vérifie la connexion : `docker login harbor.kakor.ovh`
-- Assure-toi d'avoir les droits sur le projet
-- Vérifie le nom du repository : `harbor.kakor.ovh/projet/...`
-- **Build avant de push** : `docker build` doit être exécuté avant `docker push`
-- Exécute les commandes depuis la racine du projet
-- **Vérifie le nom du projet** : Va sur https://harbor.kakor.ovh pour voir le nom exact du projet (peut être différent de "projet")
 
 ### Logs utiles
 

@@ -1,30 +1,52 @@
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: lucas-mongo-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  nfs:
+    path: /Volume1/public/nfs-share-openshift/project-gp-1
+    server: 192.168.1.56
+
+---
+
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mongo-pvc
+  name: lucas-mongo-pvc
 spec:
   accessModes:
     - ReadWriteOnce
+  volumeMode: Filesystem
   resources:
     requests:
       storage: 1Gi
+  storageClassName: slow
+
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: calculator-mongo
+  name: lucas-calculator-mongo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: calculator-mongo
+      app: lucas-calculator-mongo
   template:
     metadata:
       labels:
-        app: calculator-mongo
+        app: lucas-calculator-mongo
     spec:
       containers:
-      - name: mongo
+      - name: lucas-calculator-mongo
         image: mongo:7.0
         ports:
         - containerPort: 27017
@@ -36,33 +58,37 @@ spec:
         - name: MONGO_INITDB_DATABASE
           value: "calculator"
         volumeMounts:
-        - name: mongo-storage
+        - name: lucas-mongo-storage
           mountPath: /data/db
         - name: init-script
           mountPath: /docker-entrypoint-initdb.d
       volumes:
-      - name: mongo-storage
+      - name: lucas-mongo-storage
         persistentVolumeClaim:
-          claimName: mongo-pvc
+          claimName: lucas-mongo-pvc
       - name: init-script
         configMap:
-          name: mongo-init-config
+          name: lucas-mongo-init-config
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: calculator-mongo
+  name: lucas-calculator-mongo
 spec:
   selector:
-    app: calculator-mongo
+    app: lucas-calculator-mongo
   ports:
   - port: 27017
     targetPort: 27017
+
 ---
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mongo-init-config
+  name: lucas-mongo-init-config
 data:
   init-mongo.js: |
     db.createUser({

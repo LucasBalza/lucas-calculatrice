@@ -39,7 +39,9 @@ spec:
               key: mongo-password
         - name: NODE_ENV
           value: "production"
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -51,7 +53,9 @@ spec:
   - name: http
     port: 3000
     targetPort: 3000
+
 ---
+
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
