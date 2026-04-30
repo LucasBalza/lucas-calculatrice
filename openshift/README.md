@@ -213,3 +213,4 @@ oc describe pod <nom-du-pod>
 * Pipeline conditionnelle aux secrets
 
 ---
+![alt text](image.png)
