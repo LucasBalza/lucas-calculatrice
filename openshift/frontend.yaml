@@ -13,13 +13,13 @@ spec:
         app: lucas-calculator-frontend
     spec:
       containers:
-      - name: frontend
-        image: harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest
-        ports:
-        - containerPort: 5173
-        env:
-        - name: VITE_API_URL
-          value: "http://lucas-calculator-backend:3000"
+        - name: frontend
+          image: harbor.kakor.ovh/ipim2il/lucas-calculator-frontend:latest
+          ports:
+            - containerPort: 5173
+          env:
+            - name: VITE_API_URL
+              value: "https://lucas-calculator-backend.apps.openshift.kakor.ovh"
 
 ---
 
