@@ -60,3 +60,19 @@ spec:
     - name: http
       port: 3000
       targetPort: 3000
+
+---
+
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: lucas-calculator-backend
+spec:
+  to:
+    kind: Service
+    name: lucas-calculator-backend
+  port:
+    targetPort: 3000
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
