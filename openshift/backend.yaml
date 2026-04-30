@@ -17,33 +17,26 @@ spec:
           image: harbor.kakor.ovh/ipim2il/lucas-calculator-backend:latest
           ports:
             - containerPort: 3000
-
           env:
             - name: PORT
               value: "3000"
-
-            # FIX IMPORTANT : URI Mongo sans interpolation Kubernetes
             - name: MONGODB_URI
               value: "mongodb://admin:password@lucas-calculator-mongo:27017/calculator"
-
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: lucas-calculator-secrets
                   key: jwt-secret
-
             - name: MONGO_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: lucas-calculator-secrets
                   key: mongo-username
-
             - name: MONGO_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: lucas-calculator-secrets
                   key: mongo-password
-
             - name: NODE_ENV
               value: "production"
 
@@ -53,7 +46,6 @@ kind: Service
 metadata:
   name: lucas-calculator-backend
 spec:
-  type: ClusterIP
   selector:
     app: lucas-calculator-backend
   ports:
@@ -62,7 +54,6 @@ spec:
       targetPort: 3000
 
 ---
-
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
@@ -72,7 +63,7 @@ spec:
     kind: Service
     name: lucas-calculator-backend
   port:
-    targetPort: 3000
+    targetPort: http
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
