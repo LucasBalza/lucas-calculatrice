@@ -6,7 +6,7 @@ Application de calculatrice avec authentification utilisateur, backend Node.js/E
 
 ```
 projet/
-├── backend/          # API Node.js + Express + MongoDB
+├── backend/          # API Node.js + Express + MongoDB 
 ├── frontend/         # Application React + TypeScript + Vite
 ├── openshift/        # Manifests Kubernetes pour OpenShift
 ├── docker-compose.yml
