@@ -5,6 +5,12 @@ interface RegisterProps {
   onSwitchToLogin: () => void;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  throw new Error("VITE_API_URL non définie");
+}
+
 export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -31,8 +37,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
     setLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${apiUrl}/auth/register`, {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
